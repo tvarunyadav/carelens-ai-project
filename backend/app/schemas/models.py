@@ -1,6 +1,6 @@
 from datetime import datetime, date
 from typing import List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 
 class HealthStatus(BaseModel):
     status: str = Field(..., description="System operational state, e.g., 'ok'")
@@ -35,8 +35,28 @@ class Patient(BaseModel):
     last_name: str = Field(..., description="Last name (synthetic)")
     dob: date = Field(..., description="Date of birth")
     gender: str = Field(..., description="Gender designation")
-    status: str = Field(default="active", description="Patient file status")
+    status: str = Field(default="active", description="Patient file status ('active' | 'archived')")
+    record_version: int = Field(default=1, description="Record revision counter")
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class StaffProfile(BaseModel):
+    id: str = Field(..., description="Supabase Auth User UUID")
+    email: str = Field(..., description="Staff email address")
+    full_name: str = Field(..., description="Full display name")
+    role: str = Field(..., description="Role ('doctor' | 'coordinator' | 'admin')")
+    created_at: Optional[datetime] = None
+
+class PatientAccessGrant(BaseModel):
+    id: str = Field(..., description="Grant UUID")
+    staff_id: str = Field(..., description="Target staff UUID")
+    patient_id: str = Field(..., description="Target patient UUID")
+    action: str = Field(..., description="Granted action ('read' | 'write' | 'admin')")
+    granted_by: Optional[str] = None
+    granted_at: datetime = Field(default_factory=datetime.utcnow)
+
+class PatientListResponse(BaseModel):
+    patients: List[Patient] = Field(default_factory=list, description="List of permitted patient records")
+    total: int = Field(..., description="Total count of authorized patients")
 
 class Question(BaseModel):
     id: str = Field(..., description="Question UUID")

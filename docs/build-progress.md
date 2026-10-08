@@ -1,93 +1,96 @@
-# CareLens AI Milestone 1 Build Progress & Verification Log
+# CareLens AI Milestone 2 Build Progress & Verification Log
 
 **Date:** October 9, 2026  
 **Developer:** Varun Yadav T  
 **Local Workspace:** `D:\carelens-ai project`  
-**GitHub Repository:** `https://github.com/tvarunyadav/carelens-ai-project.git`
+**GitHub Repository:** `https://github.com/tvarunyadav/carelens-ai-project.git`  
+**Current Feature Branch:** `feature/auth-patients`
 
 ---
 
-## 1. Implemented Capabilities (Milestone 1)
+## 1. Implemented Capabilities (Milestone 2)
 
-- [x] **Complete Folder Architecture Scaffolded**:
-  - Backend: `backend/app/` (`main.py`, `core`, `auth`, `api`, `schemas`, `patients`, `documents`, `ingestion`, `retrieval`, `providers`, `reconciliation`, `audit`)
-  - Frontend: `frontend/src/` (`pages`, `components`, `services`, `hooks`, `types`, `auth`, `lib`)
-  - Database & Demo: `database/` (`migrations`, `seeds`), `demo-data/` (`patients`, `expected_answers`)
-  - Docs: `docs/` (`architecture.md`, `api-contracts.md`, `setup.md`, `build-progress.md`)
-- [x] **Python Packages & Retained Directories**:
-  - `__init__.py` files and descriptive README placeholders created in all empty directories so Git retains planned module boundaries without fake clinical logic.
-- [x] **Shared Contract Schemas Defined**:
-  - Pydantic models in `backend/app/schemas/models.py` and TypeScript interfaces in `frontend/src/types/index.ts` for `Patient`, `Question`, `Claim`, `Citation`, `TimelineEvent`, and `HealthStatus`.
-- [x] **FastAPI Engine & Security**:
-  - `GET /health` endpoint returning readiness response (`{"status": "ok", "service": "CareLens AI", "version": "0.1.0", "timestamp": "..."}`) without exposing secrets.
-  - Explicit CORS middleware configured for `http://localhost:5173` and `http://127.0.0.1:5173`.
-  - Core settings powered by `pydantic-settings`.
-- [x] **Frontend Setup Screen & Reusable API Client**:
-  - React 19 + Vite + TypeScript UI with custom medical dark mode and glassmorphism styling (`frontend/src/pages/SetupPage.tsx`).
-  - Reusable API client (`frontend/src/services/api.ts`) with explicit 5-second timeout, error state handling, and CORS connection testing.
-  - Interactive `HealthCheckCard` component with live connection status, loading spinners, and error resolution tips.
-- [x] **Environment Security**:
-  - `backend/.env.example`, `frontend/.env.example`, and root `.gitignore` configured. Secrets remain backend-only.
-- [x] **Packaging & Testing**:
-  - Production `backend/Dockerfile` using Python 3.11-slim.
-  - Unit test suite (`backend/tests/test_health.py`) using `pytest`, `httpx`, and `pytest-asyncio`.
+- [x] **Database Migration & Security Schema**:
+  - Auth-linked staff profile table (`public.staff_profiles`) with constrained `doctor`, `coordinator`, and `admin` roles.
+  - Synthetic patients table (`public.patients`) with UUID primary keys, MRN uniqueness, and `record_version` counter.
+  - Patient access grants table (`public.patient_access_grants`) enforcing patient-level isolation (`UNIQUE(staff_id, patient_id, action)`).
+  - Telemetry audit events table (`public.audit_events`) excluding secret logging.
+  - Row Level Security (RLS) policies configured on all tables. Ordinary users cannot modify their own roles or assign arbitrary grants. Admin role alone does NOT grant clinical access to every patient without explicit grants.
+- [x] **Backend Bearer Token Verification & Authorization Endpoints**:
+  - Official Supabase access token verification (`app/auth/verifier.py`) rejecting missing, invalid, or expired tokens (HTTP 401).
+  - Implemented `GET /api/v1/me` returning verified staff profile.
+  - Implemented `GET /api/v1/patients` returning only patients for which the authenticated user holds an explicit access grant.
+  - Implemented `GET /api/v1/patients/{patient_id}` with pre-authorization check returning `403 Forbidden` for unauthorized patient records.
+- [x] **Frontend Supabase Auth & Patient Directory Integration**:
+  - `@supabase/supabase-js` SDK initialized in `frontend/src/lib/supabase.ts`.
+  - Auth context provider (`AuthProvider` & `useAuth`) managing session state, Supabase login, token storage, and logout state clearing.
+  - Medical-themed `LoginPage` with live Supabase authentication and dev test account switcher.
+  - Interactive `PatientsPage` displaying authorized synthetic patient records, search filtering, and detail modal inspection.
+  - Tab navigation between Patient Directory and Milestone 1 Setup / Health Verifier.
+- [x] **Documentation & Setup**:
+  - Created [`docs/milestone-2-setup.md`](./milestone-2-setup.md) detailing Supabase migration execution, staff user creation, patient grant assignment, and environment variable configuration.
+  - Updated [`docs/api-contracts.md`](./api-contracts.md) with `/api/v1/me`, `/api/v1/patients`, and `/api/v1/patients/{patient_id}` specifications.
 
 ---
 
 ## 2. Empirical Verification Results
 
-### A. TypeScript & Frontend Production Build
+### A. Backend Pytest Suite (Auth & Patient Isolation)
+- **Command:** `.\venv\Scripts\pytest -v` (in `backend/`)
+- **Result:** **PASSED (Exit Code: 0)**
+- **Output:**
+  ```text
+  collected 9 items
+  tests/test_auth_patients.py::test_health_endpoint PASSED [ 11%]
+  tests/test_auth_patients.py::test_me_endpoint_missing_token PASSED [ 22%]
+  tests/test_auth_patients.py::test_me_endpoint_invalid_token PASSED [ 33%]
+  tests/test_auth_patients.py::test_me_endpoint_valid_token PASSED [ 44%]
+  tests/test_auth_patients.py::test_patients_isolation_dr_alice PASSED [ 55%]
+  tests/test_auth_patients.py::test_patients_isolation_bob_coordinator PASSED [ 66%]
+  tests/test_auth_patients.py::test_admin_without_explicit_grant_has_zero_clinical_patients PASSED [ 77%]
+  tests/test_auth_patients.py::test_patient_detail_authorized_vs_unauthorized PASSED [ 88%]
+  tests/test_health.py::test_health_check_endpoint PASSED [100%]
+  ======================= 9 passed in 8.44s =======================
+  ```
+
+### B. Frontend TypeScript & Production Build Verification
 - **Command:** `npm run build` (in `frontend/`)
 - **Result:** **PASSED (Exit Code: 0)**
 - **Output:**
   ```text
   vite v8.3.4 building client environment for production...
-  ✓ 1908 modules transformed.
-  dist/index.html                   0.45 kB │ gzip:  0.29 kB
-  dist/assets/index-CAkehvFd.css   15.31 kB │ gzip:  3.89 kB
-  dist/assets/index-BRZqxpOt.js   267.40 kB │ gzip: 83.55 kB
-  ✓ built in 20.95s
-  ```
-
-### B. Pytest Backend Suite Verification
-- **Command:** `.\venv\Scripts\pytest -v` (in `backend/`)
-- **Result:** **PASSED (Exit Code: 0)**
-- **Output:**
-  ```text
-  collected 1 item
-  tests/test_health.py::test_health_check_endpoint PASSED [100%]
-  1 passed in 5.69s
-  ```
-
-### C. Live FastAPI Server & GET /health Endpoint
-- **Command:** `httpx.get('http://127.0.0.1:8000/health')`
-- **Result:** **HTTP 200 OK**
-- **Response Payload:**
-  ```json
-  {
-    "status": "ok",
-    "service": "CareLens AI",
-    "version": "0.1.0",
-    "timestamp": "2026-10-08T19:07:16.921194Z"
-  }
+  ✓ 1955 modules transformed.
+  dist/index.html                   0.45 kB │ gzip:   0.29 kB
+  dist/assets/index-BcDAGczn.css   20.99 kB │ gzip:   4.80 kB
+  dist/assets/index-oZn6oQUf.js   503.66 kB │ gzip: 142.67 kB
+  ✓ built in 32.34s
   ```
 
 ---
 
 ## 3. Planned vs. Implemented Separation (Deferrals)
 
-The following features are deferred to future milestones and have **not** been mocked with fake clinical data:
-- Mock login / authentication bypassing (Deferred to Milestone 2).
-- Synthetic patient database seeding & RLS policies (Deferred to Milestone 2).
-- PDF storage & ingestion engine (Deferred to Milestone 3).
-- Vector search & AI completion generation (Deferred to Milestone 4).
-- Timeline UI & PDF.js evidence visualizer (Deferred to Milestone 5).
-- Treatment cycle comparison & reconciliation diffs (Deferred to Milestone 6).
-- Groq LLM fallback adapter (Deferred to Milestone 7).
+The following capabilities remain explicitly **deferred** to future milestones:
+- PDF document storage & signed URL upload (Deferred to Milestone 3).
+- `pdfplumber` page extraction & text chunking (Deferred to Milestone 3).
+- Sentence Transformers embedding generation & `pgvector` similarity search (Deferred to Milestone 4).
+- Gemini & Groq LLM completion adapters (Deferred to Milestone 4 & 7).
+- Dynamic clinical history timeline visualizer & PDF.js evidence viewer (Deferred to Milestone 5).
+- Treatment cycle comparison & reconciliation diffing (Deferred to Milestone 6).
 
 ---
 
-## 4. Unverified Items
+## 4. Remaining Live Configuration Items
 
-- **Automated Browser Automation Tooling:** The browser subagent encountered an environment-level driver download error when attempting to launch automated Chromium context via Playwright. Manual verification in browser (`http://localhost:5173`) remains available and verified via HTTP tests.
-- **Docker Container Runtime Execution:** `backend/Dockerfile` has been authored and verified syntactically, but requires Docker Desktop daemon running for runtime container launch.
+To connect the application to a live external Supabase project:
+1. Run [`database/migrations/001_milestone2_auth_patients.sql`](../database/migrations/001_milestone2_auth_patients.sql) in the Supabase SQL Editor.
+2. Run [`database/seeds/001_demo_seeds.sql`](../database/seeds/001_demo_seeds.sql) in the Supabase SQL Editor.
+3. Configure `backend/.env` with your `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_JWT_SECRET`.
+4. Configure `frontend/.env` with your `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
+
+---
+
+## 5. Next Steps for Milestone 3
+
+- **Private Document Uploads & Storage:** Create private PDF bucket in Supabase Storage and build signed upload URL endpoints.
+- **PDF Extraction Engine:** Integrate `pdfplumber` to extract page text, page numbers, and bounding box coordinates for fact provenance.

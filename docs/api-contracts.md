@@ -2,6 +2,8 @@
 
 All contracts are defined as Pydantic models in `backend/app/schemas/models.py` and mirrored as TypeScript interfaces in `frontend/src/types/index.ts`.
 
+---
+
 ## 1. HealthStatus Contract (`GET /health`)
 
 ```json
@@ -13,34 +15,94 @@ All contracts are defined as Pydantic models in `backend/app/schemas/models.py` 
 }
 ```
 
-## 2. Patient Schema
+---
+
+## 2. StaffProfile Contract (`GET /api/v1/me`)
+
+Requires `Authorization: Bearer <token>` header. Rejects missing/invalid token with `401 Unauthorized`.
 
 ```json
 {
-  "id": "pat_9f8a7b6c-5d4e-3f2a-1b0c-9d8e7f6a5b4c",
+  "id": "11111111-aaaa-1111-aaaa-111111111111",
+  "email": "dr.alice@clinic.org",
+  "full_name": "Dr. Alice Morgan",
+  "role": "doctor"
+}
+```
+
+---
+
+## 3. Patient List Contract (`GET /api/v1/patients`)
+
+Requires `Authorization: Bearer <token>` header. Returns ONLY patients for which the authenticated user holds an explicit access grant.
+
+```json
+{
+  "patients": [
+    {
+      "id": "11111111-1111-1111-1111-111111111111",
+      "mrn": "MRN-884920",
+      "first_name": "Eleanor",
+      "last_name": "Vane",
+      "dob": "1968-04-12",
+      "gender": "Female",
+      "status": "active",
+      "record_version": 1,
+      "created_at": "2026-10-09T00:00:00Z"
+    },
+    {
+      "id": "22222222-2222-2222-2222-222222222222",
+      "mrn": "MRN-993041",
+      "first_name": "Marcus",
+      "last_name": "Chen",
+      "dob": "1975-09-28",
+      "gender": "Male",
+      "status": "active",
+      "record_version": 1,
+      "created_at": "2026-10-09T00:00:00Z"
+    }
+  ],
+  "total": 2
+}
+```
+
+---
+
+## 4. Patient Detail Contract (`GET /api/v1/patients/{patient_id}`)
+
+Requires `Authorization: Bearer <token>` header. Authorizes detail access BEFORE returning patient data. Returns `403 Forbidden` if unauthorized.
+
+```json
+{
+  "id": "11111111-1111-1111-1111-111111111111",
   "mrn": "MRN-884920",
   "first_name": "Eleanor",
   "last_name": "Vane",
   "dob": "1968-04-12",
   "gender": "Female",
   "status": "active",
+  "record_version": 1,
   "created_at": "2026-10-09T00:00:00Z"
 }
 ```
 
-## 3. Question Schema
+---
+
+## 5. Question Schema (Milestone 4+)
 
 ```json
 {
   "id": "q_12345678-aaaa-bbbb-cccc-ddddeeeeffff",
-  "patient_id": "pat_9f8a7b6c-5d4e-3f2a-1b0c-9d8e7f6a5b4c",
+  "patient_id": "11111111-1111-1111-1111-111111111111",
   "text": "What was the patient's latest HbA1c measurement and when was it taken?",
-  "asked_by": "staff_dr_smith@clinic.org",
+  "asked_by": "dr.alice@clinic.org",
   "created_at": "2026-10-09T00:10:00Z"
 }
 ```
 
-## 4. Citation Schema
+---
+
+## 6. Citation Schema (Milestone 4+)
 
 ```json
 {
@@ -58,7 +120,9 @@ All contracts are defined as Pydantic models in `backend/app/schemas/models.py` 
 }
 ```
 
-## 5. Claim Schema
+---
+
+## 7. Claim Schema (Milestone 4+)
 
 ```json
 {
@@ -83,12 +147,14 @@ All contracts are defined as Pydantic models in `backend/app/schemas/models.py` 
 }
 ```
 
-## 6. TimelineEvent Schema
+---
+
+## 8. TimelineEvent Schema (Milestone 5+)
 
 ```json
 {
   "id": "evt_99887766-5544-3322-1100-aabbccddeeff",
-  "patient_id": "pat_9f8a7b6c-5d4e-3f2a-1b0c-9d8e7f6a5b4c",
+  "patient_id": "11111111-1111-1111-1111-111111111111",
   "event_date": "2025-09-14",
   "category": "Lab Result",
   "summary": "HbA1c tested at 6.8%",

@@ -29,7 +29,21 @@ export interface Patient {
   dob: string;
   gender: string;
   status: 'active' | 'archived';
-  created_at: string;
+  record_version: number;
+  created_at?: string;
+}
+
+export interface StaffProfile {
+  id: string;
+  email: string;
+  full_name: string;
+  role: 'doctor' | 'coordinator' | 'admin';
+  created_at?: string;
+}
+
+export interface PatientListResponse {
+  patients: Patient[];
+  total: number;
 }
 
 export interface Question {

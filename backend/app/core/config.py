@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -14,6 +14,12 @@ class Settings(BaseSettings):
         "http://localhost:5173",
         "http://127.0.0.1:5173",
     ]
+
+    # Supabase Configuration (Milestone 2)
+    SUPABASE_URL: str = "https://your-supabase-project.supabase.co"
+    SUPABASE_ANON_KEY: str = "your-supabase-anon-key"
+    SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
+    SUPABASE_JWT_SECRET: Optional[str] = None
 
     model_config = SettingsConfigDict(
         env_file=".env",
