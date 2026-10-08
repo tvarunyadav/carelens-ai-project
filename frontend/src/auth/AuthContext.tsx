@@ -9,7 +9,6 @@ interface AuthContextType {
   isLoading: boolean;
   error: string | null;
   loginWithSupabase: (email: string, pass: string) => Promise<void>;
-  loginAsDevUser: (devUserKey: 'dev_user_alice' | 'dev_user_bob' | 'dev_user_admin') => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -48,7 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     restoreSession();
   }, [token]);
 
-  // Listen to real Supabase Auth state change if configured
+  // Listen to real Supabase Auth state changes
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.access_token) {
@@ -85,26 +84,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('carelens_access_token', accessToken);
         const profile = await apiClient.getMe(accessToken);
         setStaff(profile);
+      } else {
+        throw new Error('No access token returned from Supabase Auth service');
       }
     } catch (err: any) {
       setError(err.message || 'Login failed. Please check credentials.');
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loginAsDevUser = async (devUserKey: 'dev_user_alice' | 'dev_user_bob' | 'dev_user_admin') => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const devToken = `test-token-${devUserKey}`;
-      const profile = await apiClient.getMe(devToken);
-      setToken(devToken);
-      setStaff(profile);
-      localStorage.setItem('carelens_access_token', devToken);
-    } catch (err: any) {
-      setError(err.message || 'Failed to login with test staff account');
       throw err;
     } finally {
       setIsLoading(false);
@@ -132,7 +116,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         error,
         loginWithSupabase,
-        loginAsDevUser,
         logout,
       }}
     >

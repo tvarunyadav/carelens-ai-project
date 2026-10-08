@@ -1,4 +1,5 @@
 -- Migration 001: CareLens AI Milestone 2 Schema - Staff Profiles, Patients, Patient Access Grants, Audit Events
+-- Executed FIRST in Supabase SQL Editor
 
 -- 1. Create Staff Profiles table linked to Supabase Auth users
 CREATE TABLE IF NOT EXISTS public.staff_profiles (
@@ -59,7 +60,7 @@ ALTER TABLE public.patients ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.patient_access_grants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_events ENABLE ROW LEVEL SECURITY;
 
--- 7. RLS Policies
+-- 7. Row Level Security Policies
 
 -- Staff Profiles: Staff can read their own profile
 CREATE POLICY "Staff can view their own profile"
@@ -67,7 +68,7 @@ CREATE POLICY "Staff can view their own profile"
     FOR SELECT
     USING (auth.uid() = id);
 
--- Staff Profiles: Users cannot update their own role
+-- Staff Profiles: Only admins can update staff profiles
 CREATE POLICY "Admins can update staff profiles"
     ON public.staff_profiles
     FOR UPDATE
@@ -97,7 +98,7 @@ CREATE POLICY "Staff can view their own access grants"
     FOR SELECT
     USING (staff_id = auth.uid());
 
--- Patient Access Grants: Only explicit admin or coordinator with grant rights can insert/modify grants
+-- Patient Access Grants: Only admins/coordinators can insert grants
 CREATE POLICY "Admins and Coordinators can insert access grants"
     ON public.patient_access_grants
     FOR INSERT

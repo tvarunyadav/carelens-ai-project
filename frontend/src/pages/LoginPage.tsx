@@ -3,10 +3,10 @@ import { useAuth } from '../auth/AuthContext';
 import { Button } from '../components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { ShieldCheck, LogIn, UserCheck, AlertCircle, Sparkles } from 'lucide-react';
+import { ShieldCheck, LogIn, AlertCircle, Info } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
-  const { loginWithSupabase, loginAsDevUser, isLoading, error } = useAuth();
+  const { loginWithSupabase, isLoading, error } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
@@ -14,7 +14,7 @@ export const LoginPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      setLocalError('Please enter both email and password.');
+      setLocalError('Please enter both clinic email address and password.');
       return;
     }
     setLocalError(null);
@@ -23,11 +23,6 @@ export const LoginPage: React.FC = () => {
     } catch (err: any) {
       // Handled in context
     }
-  };
-
-  const handleDevLogin = async (key: 'dev_user_alice' | 'dev_user_bob' | 'dev_user_admin') => {
-    setLocalError(null);
-    await loginAsDevUser(key);
   };
 
   return (
@@ -42,18 +37,21 @@ export const LoginPage: React.FC = () => {
             CareLens AI
           </h1>
           <p className="text-xs text-slate-400">
-            Authorized Clinic Staff Authentication Portal • Milestone 2
+            Authorized Clinic Staff Portal • Supabase Auth Authentication
           </p>
         </div>
 
         <Card className="border-teal-500/20 shadow-2xl">
           <CardHeader>
-            <CardTitle>
-              <LogIn className="w-5 h-5 text-teal-400" />
-              Staff Sign In
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>
+                <LogIn className="w-5 h-5 text-teal-400" />
+                Staff Sign In
+              </CardTitle>
+              <Badge variant="info">Supabase Auth</Badge>
+            </div>
             <CardDescription>
-              Enter your credentials to access authorized synthetic patient records.
+              Enter your verified clinic credentials to access authorized patient EHR records.
             </CardDescription>
           </CardHeader>
 
@@ -73,7 +71,7 @@ export const LoginPage: React.FC = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="staff@clinic.org"
+                placeholder="dr.alice@clinic.org"
                 className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               />
             </div>
@@ -97,69 +95,19 @@ export const LoginPage: React.FC = () => {
               isLoading={isLoading}
               className="w-full"
             >
-              Sign In with Supabase Auth
+              Sign In
             </Button>
           </form>
 
-          {/* Quick Staff Account Switcher Banner */}
-          <div className="mt-6 pt-4 border-t border-slate-800/80 space-y-3">
-            <div className="flex items-center justify-between text-xs text-slate-400">
-              <span className="flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                Local Dev Quick-Switch
-              </span>
-              <Badge variant="neutral">Milestone 2 Demo</Badge>
+          {/* Setup Guidance Box */}
+          <div className="mt-6 pt-4 border-t border-slate-800/80 space-y-2 text-xs text-slate-400">
+            <div className="flex items-center gap-1.5 font-semibold text-slate-300">
+              <Info className="w-4 h-4 text-teal-400" />
+              Staff Account Setup Notice
             </div>
-
-            <div className="grid grid-cols-1 gap-2">
-              <button
-                type="button"
-                onClick={() => handleDevLogin('dev_user_alice')}
-                className="text-left bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-teal-500/50 p-2.5 rounded-lg text-xs transition-colors flex items-center justify-between group"
-              >
-                <div>
-                  <div className="font-semibold text-slate-200 group-hover:text-teal-300">
-                    Dr. Alice Morgan
-                  </div>
-                  <div className="text-[11px] text-slate-400">
-                    Role: <span className="text-teal-400">Doctor</span> • Grants: Eleanor Vane, Marcus Chen
-                  </div>
-                </div>
-                <UserCheck className="w-4 h-4 text-slate-500 group-hover:text-teal-400" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleDevLogin('dev_user_bob')}
-                className="text-left bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-cyan-500/50 p-2.5 rounded-lg text-xs transition-colors flex items-center justify-between group"
-              >
-                <div>
-                  <div className="font-semibold text-slate-200 group-hover:text-cyan-300">
-                    Bob Vance
-                  </div>
-                  <div className="text-[11px] text-slate-400">
-                    Role: <span className="text-cyan-400">Coordinator</span> • Grants: Sophia Patel only
-                  </div>
-                </div>
-                <UserCheck className="w-4 h-4 text-slate-500 group-hover:text-cyan-400" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleDevLogin('dev_user_admin')}
-                className="text-left bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-purple-500/50 p-2.5 rounded-lg text-xs transition-colors flex items-center justify-between group"
-              >
-                <div>
-                  <div className="font-semibold text-slate-200 group-hover:text-purple-300">
-                    Sam Admin
-                  </div>
-                  <div className="text-[11px] text-slate-400">
-                    Role: <span className="text-purple-400">Admin</span> • Grants: 0 clinical records (isolation test)
-                  </div>
-                </div>
-                <UserCheck className="w-4 h-4 text-slate-500 group-hover:text-purple-400" />
-              </button>
-            </div>
+            <p className="text-[11px] leading-relaxed text-slate-400">
+              Sign-in requires a staff account registered in Supabase Auth and assigned a role in <code className="text-teal-300">public.staff_profiles</code>. Follow the migration and user creation steps in <code className="text-slate-300">docs/milestone-2-setup.md</code>.
+            </p>
           </div>
         </Card>
       </div>
