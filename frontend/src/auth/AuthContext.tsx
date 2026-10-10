@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import type { StaffProfile } from '../types';
 import { apiClient } from '../services/api';
 import { supabase } from '../lib/supabase';
@@ -20,11 +20,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Ref to track the active token and avoid late responses overwriting session state
+  const activeTokenRef = useRef<string | null>(token);
+  activeTokenRef.current = token;
+
+  // Ref to track active login in progress to prevent duplicate restoreSession calls
+  const isLoggingInRef = useRef<boolean>(false);
+
   // Restore session on load or token change
   useEffect(() => {
+    let isCancelled = false;
+
     async function restoreSession() {
       if (!token) {
         setStaff(null);
+        setIsLoading(false);
+        return;
+      }
+
+      // If manual login is currently in progress, skip duplicate restoration
+      if (isLoggingInRef.current) {
+        return;
+      }
+
+      // If staff profile is already loaded for this token, skip duplicate network call
+      if (staff && localStorage.getItem('carelens_access_token') === token) {
         setIsLoading(false);
         return;
       }
@@ -33,27 +53,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setError(null);
       try {
         const profile = await apiClient.getMe(token);
-        setStaff(profile);
+        if (!isCancelled && activeTokenRef.current === token) {
+          setStaff(profile);
+        }
       } catch (err: any) {
-        setError(err.message || 'Session expired or invalid');
-        setToken(null);
-        setStaff(null);
-        localStorage.removeItem('carelens_access_token');
+        if (!isCancelled && activeTokenRef.current === token) {
+          setError(err.message || 'Session expired or invalid');
+          setToken(null);
+          setStaff(null);
+          localStorage.removeItem('carelens_access_token');
+        }
       } finally {
-        setIsLoading(false);
+        if (!isCancelled && activeTokenRef.current === token) {
+          setIsLoading(false);
+        }
       }
     }
 
     restoreSession();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [token]);
 
   // Listen to real Supabase Auth state changes
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.access_token) {
-        setToken(session.access_token);
-        localStorage.setItem('carelens_access_token', session.access_token);
+        if (session.access_token !== activeTokenRef.current) {
+          setToken(session.access_token);
+          localStorage.setItem('carelens_access_token', session.access_token);
+        }
       } else if (event === 'SIGNED_OUT') {
+        activeTokenRef.current = null;
         setToken(null);
         setStaff(null);
         localStorage.removeItem('carelens_access_token');
@@ -66,9 +99,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const loginWithSupabase = async (email: string, pass: string) => {
+    isLoggingInRef.current = true;
     setIsLoading(true);
     setError(null);
+
+    const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+    const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
+
+    const isPlaceholderUrl = !supabaseUrl || supabaseUrl.includes('your-supabase-project') || supabaseUrl.includes('placeholder-project');
+    const isPlaceholderKey = !supabaseAnonKey || supabaseAnonKey.includes('your-supabase-anon-key') || supabaseAnonKey.includes('placeholder-anon-key');
+
+    if (isPlaceholderUrl || isPlaceholderKey) {
+      const msg = 'Supabase credentials are not configured in frontend/.env. Please enter your real VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in frontend/.env.';
+      setError(msg);
+      setIsLoading(false);
+      isLoggingInRef.current = false;
+      throw new Error(msg);
+    }
+
     try {
+      // Clear previous session completely before logging in
+      setStaff(null);
+      setToken(null);
+      localStorage.removeItem('carelens_access_token');
+      await supabase.auth.signOut().catch(() => {});
+
       const { data, error: sbError } = await supabase.auth.signInWithPassword({
         email,
         password: pass,
@@ -80,23 +135,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (data.session?.access_token) {
         const accessToken = data.session.access_token;
-        setToken(accessToken);
-        localStorage.setItem('carelens_access_token', accessToken);
+        activeTokenRef.current = accessToken;
+
+        // Fetch verified profile BEFORE setting React token state to eliminate duplicate requests
         const profile = await apiClient.getMe(accessToken);
+        
+        localStorage.setItem('carelens_access_token', accessToken);
         setStaff(profile);
+        setToken(accessToken);
       } else {
         throw new Error('No access token returned from Supabase Auth service');
       }
     } catch (err: any) {
-      setError(err.message || 'Login failed. Please check credentials.');
-      throw err;
+      let msg = err.message || 'Login failed. Please check credentials.';
+      if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+        msg = `Failed to connect to Supabase Auth at ${supabaseUrl}. Please verify your internet connection and VITE_SUPABASE_URL in frontend/.env.`;
+      }
+      setError(msg);
+      setStaff(null);
+      setToken(null);
+      localStorage.removeItem('carelens_access_token');
+      throw new Error(msg);
     } finally {
+      isLoggingInRef.current = false;
       setIsLoading(false);
     }
   };
 
   const logout = async () => {
     setIsLoading(true);
+    activeTokenRef.current = null;
     try {
       await supabase.auth.signOut().catch(() => {});
     } finally {

@@ -93,17 +93,29 @@ Access Frontend Setup Screen: `http://localhost:5173`
 
 ## 🗺️ Development Milestones
 
-- [x] **Milestone 1: Complete Folder Architecture & Runnable Health Connection** *(Current)*
-  - End-to-end folder scaffolding, Pydantic & TS schemas, explicit CORS, FastAPI `/health` route, setup screen, Dockerfile, tests, and documentation.
-- [ ] **Milestone 2: Supabase Authentication, Patient Grants & Directory**
-  - Auth client, role checks, RLS policies, patient directory list.
-- [ ] **Milestone 3: Private Uploads, PDF Extraction & Ingestion**
-  - Signed PDF uploads to Supabase Storage, `pdfplumber` text & bounding box extraction.
-- [ ] **Milestone 4: Embeddings, Retrieval, Gemini Answers & Citations**
-  - Sentence Transformers embedding pipeline, `pgvector` similarity search, Gemini completion adapter with exact page citations.
-- [ ] **Milestone 5: Connected Timeline, Brief & PDF Evidence Viewer**
-  - Dynamic patient timeline visualizer, case brief banner, embedded PDF.js page bounding box highlighter.
-- [ ] **Milestone 6: Cycle Comparison, Test/Result Matching & New-Report Updates**
-  - Cross-report lab matching, treatment cycle comparison table, automated delta detection on upload.
-- [ ] **Milestone 7: Groq Fallback, Verification & Demo Preparation**
-  - Provider failover to Groq SDK, end-to-end Playwright tests, synthetic demo dataset validation.
+- [x] **Milestone 1: Complete Folder Architecture & Runnable Health Connection**
+- [x] **Milestone 2: Supabase Authentication, Patient Grants & Directory**
+- [x] **Milestone 3: Private Uploads, PDF Extraction & Ingestion**
+- [x] **Milestone 4: Embeddings, Retrieval, Gemini Answers & Citations**
+- [x] **Milestone 5: Connected Timeline, Brief & PDF Evidence Viewer**
+- [x] **Milestone 6: Secure Document Intake, OCR & Record Version History**
+- [x] **Milestone 7: Problem 2 Prototype — Patient History Retrieval, 10 Synthetic Patients & Conflict Reconciliation**
+  - **10 Synthetic Patients**: Canonical datasets covering demographics, consultations, fertility cycles, labs, procedures, and pending orders.
+  - **Source Citation & Original PDF Viewer**: Opens original synthetic PDFs or uploaded documents from private storage with page provenance and `URL.revokeObjectURL` cleanup.
+  - **Conflict & Reconciliation Review**: Surfaces discrepant clinical values with explicit staff resolution recording and immutable audit tracking.
+  - **Multilingual Voice & Cross-Language Retrieval**: Web Speech API transcription for Tamil and English with grounded RAG retrieval (`BAAI/bge-small-en-v1.5`, 384 dimensions).
+
+---
+
+## 🗄️ Database Migrations
+
+1. `001_initial_schema.sql`: Initial synthetic patients and staff tables.
+2. `002_fix_staff_uuids.sql`: UUID alignment for authentication.
+3. `003_patient_workspace_schema.sql`: Patient documents, document versions, timeline events, and fertility cycles tables.
+4. `004_patient_vector_search.sql`: Vector chunks table and similarity search RPC functions.
+5. `005_patient_vector_search_repair.sql`: Vector chunk foreign key repair and indexing updates.
+6. `006_restricted_audit_policies.sql`: Audit event policies and restricted access logs.
+7. `007_document_intake_versioning.sql`: Milestone 6 intake fields, review status, content hash indexes, and RLS write policies.
+8. `008_atomic_versioning_and_fixes.sql`: Atomic version creation RPC (`create_atomic_document_version`) and version uniqueness constraint.
+9. `009_conflict_reviews_and_activity_history.sql`: Clinical conflict resolution reviews table and RLS policies.
+

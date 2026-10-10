@@ -23,10 +23,10 @@ Requires `Authorization: Bearer <token>` header. Rejects missing/invalid token w
 
 ```json
 {
-  "id": "11111111-aaaa-1111-aaaa-111111111111",
-  "email": "dr.alice@clinic.org",
-  "full_name": "Dr. Alice Morgan",
-  "role": "doctor"
+  "id": "7b7c7b68-8c02-4081-a5a3-18b6cdcb26f7",
+  "email": "coord.bob@clinic.org",
+  "full_name": "Bob Vance",
+  "role": "coordinator"
 }
 ```
 
@@ -40,124 +40,80 @@ Requires `Authorization: Bearer <token>` header. Returns ONLY patients for which
 {
   "patients": [
     {
-      "id": "11111111-1111-1111-1111-111111111111",
-      "mrn": "MRN-884920",
-      "first_name": "Eleanor",
-      "last_name": "Vane",
-      "dob": "1968-04-12",
+      "id": "33333333-3333-3333-3333-333333333333",
+      "mrn": "MRN-441029",
+      "first_name": "Sophia",
+      "last_name": "Patel",
+      "dob": "1982-11-05",
       "gender": "Female",
       "status": "active",
-      "record_version": 1,
-      "created_at": "2026-10-09T00:00:00Z"
-    },
-    {
-      "id": "22222222-2222-2222-2222-222222222222",
-      "mrn": "MRN-993041",
-      "first_name": "Marcus",
-      "last_name": "Chen",
-      "dob": "1975-09-28",
-      "gender": "Male",
-      "status": "active",
-      "record_version": 1,
-      "created_at": "2026-10-09T00:00:00Z"
+      "record_version": 1
     }
   ],
-  "total": 2
+  "total": 1
 }
 ```
 
 ---
 
-## 4. Patient Detail Contract (`GET /api/v1/patients/{patient_id}`)
+## 4. History Assistant Summary (`POST /api/v1/patients/{patient_id}/ai/summary`)
 
-Requires `Authorization: Bearer <token>` header. Authorizes detail access BEFORE returning patient data. Returns `403 Forbidden` if unauthorized.
-
-```json
-{
-  "id": "11111111-1111-1111-1111-111111111111",
-  "mrn": "MRN-884920",
-  "first_name": "Eleanor",
-  "last_name": "Vane",
-  "dob": "1968-04-12",
-  "gender": "Female",
-  "status": "active",
-  "record_version": 1,
-  "created_at": "2026-10-09T00:00:00Z"
-}
-```
-
----
-
-## 5. Question Schema (Milestone 4+)
+Requires `Authorization: Bearer <token>`. Generates grounded history summary.
 
 ```json
 {
-  "id": "q_12345678-aaaa-bbbb-cccc-ddddeeeeffff",
-  "patient_id": "11111111-1111-1111-1111-111111111111",
-  "text": "What was the patient's latest HbA1c measurement and when was it taken?",
-  "asked_by": "dr.alice@clinic.org",
-  "created_at": "2026-10-09T00:10:00Z"
-}
-```
-
----
-
-## 6. Citation Schema (Milestone 4+)
-
-```json
-{
-  "id": "cit_001",
-  "document_id": "doc_lab_results_2025_09.pdf",
-  "document_name": "Metabolic Panel & HbA1c Report.pdf",
-  "page_number": 2,
-  "text_snippet": "HbA1c: 6.8% (Reference Range: < 5.7%). Date of specimen collection: Sep 14, 2025.",
-  "bounding_box": {
-    "x_min": 72.0,
-    "y_min": 140.5,
-    "x_max": 540.0,
-    "y_max": 185.2
-  }
-}
-```
-
----
-
-## 7. Claim Schema (Milestone 4+)
-
-```json
-{
-  "id": "clm_550e8400-e29b-41d4-a716-446655440000",
-  "text": "The patient's most recent HbA1c level was 6.8% on September 14, 2025, indicating diabetic range glycemic control.",
-  "confidence": 0.96,
-  "citations": [
+  "status": "success",
+  "answer": "Sophia Patel is a 43-year-old female undergoing IVF treatment. [EV-1]",
+  "provider": "Gemini (gemini-2.5-flash)",
+  "evidence": [
     {
-      "id": "cit_001",
-      "document_id": "doc_lab_results_2025_09.pdf",
-      "document_name": "Metabolic Panel & HbA1c Report.pdf",
-      "page_number": 2,
-      "text_snippet": "HbA1c: 6.8% (Reference Range: < 5.7%). Date of specimen collection: Sep 14, 2025.",
-      "bounding_box": {
-        "x_min": 72.0,
-        "y_min": 140.5,
-        "x_max": 540.0,
-        "y_max": 185.2
-      }
+      "id": "EV-1",
+      "type": "document_chunk",
+      "title": "Initial Reproductive Endocrinology Consultation",
+      "document_id": "31111111-1111-1111-1111-111111111111",
+      "page_number": 1,
+      "date": "2026-04-15",
+      "snippet": "Initial Reproductive Endocrinology Consultation..."
     }
-  ]
+  ],
+  "evidence_citations": ["EV-1"],
+  "evidence_limitations": null
 }
 ```
 
 ---
 
-## 8. TimelineEvent Schema (Milestone 5+)
+## 5. History Assistant Question Answering (`POST /api/v1/patients/{patient_id}/ai/query`)
 
+Requires `Authorization: Bearer <token>`.
+
+**Request Body:**
 ```json
 {
-  "id": "evt_99887766-5544-3322-1100-aabbccddeeff",
-  "patient_id": "11111111-1111-1111-1111-111111111111",
-  "event_date": "2025-09-14",
-  "category": "Lab Result",
-  "summary": "HbA1c tested at 6.8%",
-  "document_id": "doc_lab_results_2025_09.pdf"
+  "query": "கடைசி இரண்டு சுழற்சிகள் மற்றும் நிலுவை அறிக்கைகள்?",
+  "input_mode": "voice",
+  "input_language": "ta",
+  "answer_language": "en"
 }
 ```
+
+**Response Body:**
+```json
+{
+  "status": "success",
+  "answer": "Sophia Patel completed two IVF cycles: IVF Cycle 1 (May 1–28, 2026) and FET cycle (July 10–Sept 1, 2026). [EV-1] [EV-2] Additionally, Karyotype & Chromosomal Microarray Panel was requested on September 15, 2026 and remains pending. [EV-3]",
+  "provider": "Gemini (gemini-2.5-flash)",
+  "evidence": [
+    {
+      "id": "EV-1",
+      "type": "fertility_cycle",
+      "title": "IVF Cycle 1 - Antagonist Ovulation Induction",
+      "date": "2026-05-01",
+      "snippet": "Status: completed, Metrics: {'oocytes_retrieved': 10, 'mature': 8, 'blastocysts_frozen': 4}"
+    }
+  ],
+  "evidence_citations": ["EV-1", "EV-2", "EV-3"],
+  "evidence_limitations": null
+}
+```
+

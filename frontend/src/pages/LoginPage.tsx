@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { Button } from '../components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
-import { Badge } from '../components/ui/badge';
-import { ShieldCheck, LogIn, AlertCircle, Info } from 'lucide-react';
+import { ShieldCheck, LogIn, AlertCircle } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const { loginWithSupabase, isLoading, error } = useAuth();
@@ -37,21 +36,18 @@ export const LoginPage: React.FC = () => {
             CareLens AI
           </h1>
           <p className="text-xs text-slate-400">
-            Authorized Clinic Staff Portal • Supabase Auth Authentication
+            Patient History Assistant
           </p>
         </div>
 
         <Card className="border-teal-500/20 shadow-2xl">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>
-                <LogIn className="w-5 h-5 text-teal-400" />
-                Staff Sign In
-              </CardTitle>
-              <Badge variant="info">Supabase Auth</Badge>
-            </div>
+            <CardTitle>
+              <LogIn className="w-5 h-5 text-teal-400" />
+              Clinic Staff Sign In
+            </CardTitle>
             <CardDescription>
-              Enter your verified clinic credentials to access authorized patient EHR records.
+              Enter your authorized staff credentials to access patient history and synthetic health records.
             </CardDescription>
           </CardHeader>
 
@@ -71,7 +67,7 @@ export const LoginPage: React.FC = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="dr.alice@clinic.org"
+                placeholder="staff@clinic.org"
                 className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               />
             </div>
@@ -98,17 +94,6 @@ export const LoginPage: React.FC = () => {
               Sign In
             </Button>
           </form>
-
-          {/* Setup Guidance Box */}
-          <div className="mt-6 pt-4 border-t border-slate-800/80 space-y-2 text-xs text-slate-400">
-            <div className="flex items-center gap-1.5 font-semibold text-slate-300">
-              <Info className="w-4 h-4 text-teal-400" />
-              Staff Account Setup Notice
-            </div>
-            <p className="text-[11px] leading-relaxed text-slate-400">
-              Sign-in requires a staff account registered in Supabase Auth and assigned a role in <code className="text-teal-300">public.staff_profiles</code>. Follow the migration and user creation steps in <code className="text-slate-300">docs/milestone-2-setup.md</code>.
-            </p>
-          </div>
         </Card>
       </div>
     </div>

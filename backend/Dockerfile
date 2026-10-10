@@ -15,11 +15,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application source
+# Copy application source and synthetic PDF storage
 COPY app/ ./app
+COPY storage/ ./storage
 
-# Expose FastAPI default port
-EXPOSE 8000
+# Default port environment variable
+ENV PORT=8010
+EXPOSE 8010
 
-# Run Uvicorn ASGI server
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run Uvicorn ASGI server using environment PORT
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8010}"]

@@ -30,6 +30,8 @@ export interface Patient {
   gender: string;
   status: 'active' | 'archived';
   record_version: number;
+  user_grant?: 'read' | 'write' | 'admin';
+  can_write?: boolean;
   created_at?: string;
 }
 
@@ -46,21 +48,69 @@ export interface PatientListResponse {
   total: number;
 }
 
+export interface DocumentItem {
+  id: string;
+  patient_id: string;
+  title: string;
+  doc_type: string;
+  clinical_date: string;
+  status: 'final' | 'pending' | 'archived' | 'draft';
+  storage_path?: string;
+  mime_type: string;
+  file_size: number;
+  current_version: number;
+}
+
+export interface DocumentListResponse {
+  documents: DocumentItem[];
+  total: number;
+}
+
+export interface TimelineEventItem {
+  id: string;
+  patient_id: string;
+  event_date: string;
+  event_type: 'visit' | 'lab_result' | 'procedure' | 'medication' | 'fertility_cycle' | 'follow_up' | 'pending_order';
+  title: string;
+  summary: string;
+  document_id?: string;
+  metadata_json?: Record<string, any>;
+}
+
+export interface TimelineListResponse {
+  events: TimelineEventItem[];
+  total: number;
+}
+
+export interface FertilityCycleItem {
+  id: string;
+  patient_id: string;
+  cycle_name: string;
+  start_date: string;
+  end_date?: string;
+  status: 'active' | 'completed' | 'cancelled';
+  notes_json?: Record<string, any>;
+}
+
+export interface FertilityCycleListResponse {
+  cycles: FertilityCycleItem[];
+  total: number;
+}
+
+export interface DocumentSourceResponse {
+  document_id: string;
+  title: string;
+  download_url: string;
+  expires_in_seconds: number;
+  mime_type: string;
+}
+
 export interface Question {
   id: string;
   patient_id: string;
   text: string;
   asked_by: string;
   created_at: string;
-}
-
-export interface TimelineEvent {
-  id: string;
-  patient_id: string;
-  event_date: string;
-  category: 'Lab Result' | 'Diagnosis' | 'Medication' | 'Procedure' | 'Note';
-  summary: string;
-  document_id?: string;
 }
 
 export interface HealthStatus {
@@ -75,3 +125,26 @@ export interface APIError {
   statusCode?: number;
   isTimeout?: boolean;
 }
+
+export interface AIEvidenceItem {
+  id: string;
+  type: 'document_chunk' | 'fertility_cycle' | 'pending_order' | 'timeline_event';
+  title: string;
+  document_id?: string;
+  document_version_id?: string;
+  page_number?: number;
+  date?: string;
+  snippet: string;
+}
+
+export interface AIResponse {
+  status: 'success' | 'ai_not_configured' | 'ai_model_unavailable' | 'ai_provider_unavailable' | 'error';
+  answer: string;
+  provider: string;
+  evidence: AIEvidenceItem[];
+  evidence_citations: string[];
+  evidence_limitations?: string;
+  detected_language?: 'en' | 'ta' | 'mixed';
+  tamil_audio_text?: string;
+}
+
